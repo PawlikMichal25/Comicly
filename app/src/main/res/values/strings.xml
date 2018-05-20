@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Comicly</string>
+    <string name="background">Background</string>
+    <string name="unknown_error_occurred">Unknown error occurred</string>
+</resources>

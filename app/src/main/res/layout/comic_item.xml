@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/imageView_comic_background"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/comic_background_size"
+        android:contentDescription="@string/background"
+        android:scaleType="centerCrop"
+        tools:src="@drawable/comic_placeholder" />
+
+    <TextView
+        android:id="@+id/textView_comic_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/default_padding"
+        android:shadowColor="@color/text_shadow"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="2"
+        android:textColor="@color/light_font"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        tools:text="Cool Pug" />
+
+</RelativeLayout>
