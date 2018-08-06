@@ -11,9 +11,6 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import android.arch.core.executor.testing.InstantTaskExecutorRule
 import io.reactivex.Single
-import org.assertj.core.api.Assertions.assertThat
-import io.reactivex.subjects.SingleSubject
-import io.spacecowboyapps.comicly.commons.Status
 import io.spacecowboyapps.comicly.commons.TimeProvider
 import io.spacecowboyapps.comicly.data.ComicsRepository.Companion.EXPIRATION_TIME
 import io.spacecowboyapps.comicly.data.db.Comic
@@ -89,7 +86,7 @@ class ComicsRepositoryTest {
         whenever(clientAdapter.getComics()).thenReturn(Single.just(DataWrapper(DataContainer(comics))))
         whenever(preferences.getLastUpdate()).thenReturn(expired)
 
-        repository.getComics()
+        repository.getComics().subscribe()
 
         verify(comicDao).deleteAll()
         verify(comicDao).insertAll(comics)
@@ -101,52 +98,8 @@ class ComicsRepositoryTest {
         whenever(clientAdapter.getComics()).thenReturn(Single.just(DataWrapper(DataContainer(comics))))
         whenever(preferences.getLastUpdate()).thenReturn(expired)
 
-        repository.getComics()
+        repository.getComics().subscribe()
 
         verify(preferences).putLastUpdate(time2)
-    }
-
-    @Test
-    fun `when comics loaded from network successfully, then Resource changes status from LOADING to SUCCESS`() {
-        val expired = time1 - EXPIRATION_TIME - 1
-        val subject = SingleSubject.create<DataWrapper<Comic>>()
-        whenever(preferences.getLastUpdate()).thenReturn(expired)
-        whenever(clientAdapter.getComics()).thenReturn(subject)
-
-        val liveData = repository.getComics()
-
-        assertThat(liveData.value?.status).isEqualTo(Status.LOADING)
-
-        subject.onSuccess(DataWrapper(DataContainer(comics)))
-        assertThat(liveData.value?.status).isEqualTo(Status.SUCCESS)
-    }
-
-    @Test
-    fun `when comics loaded from network unsuccessfully, then Resource changes status from LOADING to ERROR`() {
-        val expired = time1 - EXPIRATION_TIME - 1
-        val subject = SingleSubject.create<DataWrapper<Comic>>()
-        whenever(preferences.getLastUpdate()).thenReturn(expired)
-        whenever(clientAdapter.getComics()).thenReturn(subject)
-
-        val liveData = repository.getComics()
-        assertThat(liveData.value?.status).isEqualTo(Status.LOADING)
-
-        subject.onError(Exception())
-        assertThat(liveData.value?.status).isEqualTo(Status.ERROR)
-    }
-
-    @Test
-    fun `when comics loaded from database successfully, then Resource changes status from LOADING to SUCCESS`() {
-        val expired = time1 - EXPIRATION_TIME + 1
-        val subject = SingleSubject.create<List<Comic>>()
-        whenever(preferences.getLastUpdate()).thenReturn(expired)
-        whenever(comicDao.getAllSingle()).thenReturn(subject)
-
-        val liveData = repository.getComics()
-
-        assertThat(liveData.value?.status).isEqualTo(Status.LOADING)
-
-        subject.onSuccess(comics)
-        assertThat(liveData.value?.status).isEqualTo(Status.SUCCESS)
     }
 }

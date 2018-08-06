@@ -1,11 +1,7 @@
 package io.spacecowboyapps.comicly.data
 
-import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.MutableLiveData
 import android.text.format.DateUtils
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.functions.Consumer
-import io.spacecowboyapps.comicly.commons.Resource
+import io.reactivex.Single
 import io.spacecowboyapps.comicly.commons.TimeProvider
 import io.spacecowboyapps.comicly.commons.rx.AppSchedulers
 import io.spacecowboyapps.comicly.data.db.Comic
@@ -23,58 +19,34 @@ class ComicsRepository
     private val timeProvider: TimeProvider
 ) {
 
-    private val disposable = CompositeDisposable()
-
-    fun getComics(): LiveData<Resource<List<Comic>>> {
-        val liveData = MutableLiveData<Resource<List<Comic>>>()
-
-        if (updateNeeded())
-            loadComicsFromNetwork(liveData)
+    fun getComics(): Single<List<Comic>> {
+        return if (updateNeeded())
+            loadComicsFromNetwork()
         else
-            loadComicsFromDatabase(liveData)
-
-        return liveData
+            loadComicsFromDatabase()
     }
 
     private fun updateNeeded(): Boolean {
         return timeProvider.now() - preferences.getLastUpdate() > EXPIRATION_TIME
     }
 
-    private fun loadComicsFromNetwork(liveData: MutableLiveData<Resource<List<Comic>>>) {
-        disposable.add(clientAdapter.getComics()
-            .observeOn(schedulers.io)
+    private fun loadComicsFromNetwork(): Single<List<Comic>> {
+        return clientAdapter
+            .getComics()
             .subscribeOn(schedulers.io)
-            .doOnSubscribe {
-                liveData.value = Resource.loading(emptyList())
-            }
-            .subscribe({
-                val comics = it.data.results
-
-                liveData.postValue(Resource.success(comics))
-
+            .map { it.data.results }
+            .doOnSuccess {
                 comicDao.deleteAll()        // To make things simpler. The policy would highly depend on app and api requirements.
-                comicDao.insertAll(comics)
+                comicDao.insertAll(it)
 
                 preferences.putLastUpdate(timeProvider.now())
-            }, {
-                liveData.postValue(Resource.error(it.message))
-            }))
-    }
-
-    private fun loadComicsFromDatabase(liveData: MutableLiveData<Resource<List<Comic>>>) {
-        disposable.add(comicDao.getAllSingle()
-            .subscribeOn(schedulers.io)
-            .observeOn(schedulers.main)
-            .doOnSubscribe {
-                liveData.value = Resource.loading(emptyList())
             }
-            .subscribe(Consumer {
-                liveData.value = Resource.success(it)
-            }))
     }
 
-    fun onCleared(){
-        disposable.dispose()
+    private fun loadComicsFromDatabase(): Single<List<Comic>> {
+        return comicDao
+            .getAllSingle()
+            .subscribeOn(schedulers.io)
     }
 
     companion object {
