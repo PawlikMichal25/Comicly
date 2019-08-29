@@ -8,6 +8,7 @@ import io.spacecowboyapps.comicly.commons.rx.AppSchedulers
 import io.spacecowboyapps.comicly.data.ComicsRepository
 import io.spacecowboyapps.comicly.di.ApplicationContext
 import io.spacecowboyapps.comicly.di.PerApp
+import io.spacecowboyapps.comicly.di.module.ActivityModule
 import io.spacecowboyapps.comicly.di.module.ApplicationModule
 import io.spacecowboyapps.comicly.di.module.DataModule
 
@@ -17,12 +18,8 @@ interface ApplicationComponent {
 
     fun inject(application: ComiclyApplication)
 
+    fun plus(activityModule: ActivityModule): ActivityComponent
+
     @ApplicationContext
     fun context(): Context
-
-    fun picasso(): Picasso
-
-    fun schedulers(): AppSchedulers
-
-    fun comicsRepository(): ComicsRepository
 }
